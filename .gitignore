@@ -1,6 +1,4 @@
-<<<<<<< HEAD
 .env
-=======
 # These are some examples of commonly ignored file patterns.
 # You should customize this list as applicable to your project.
 # Learn more about .gitignore:
@@ -51,4 +49,3 @@ Thumbs.db
 *.mov
 *.wmv
 
->>>>>>> 70334b7c7269cbf02f17f4426d8ac15def955118
