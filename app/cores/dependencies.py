@@ -1,5 +1,5 @@
 from fastapi import Depends, HTTPException, status
-from jose import JWTError
+from jose import JWTError, ExpiredSignatureError
 from fastapi.security import OAuth2PasswordBearer
 from sqlalchemy.orm import Session
 from app.cores.database import SessionLocal
@@ -16,7 +16,10 @@ def get_db():
         db.close()
 
 def get_current_user(token: str = Depends(oauth2_scheme), db: Session = Depends(get_db)) -> User:
-    credentials_exception = HTTPException(status_code=status.HTTP_401_UNAUTHORIZED,detail="Invalid Token")
+    credentials_exception = HTTPException(
+        status_code=status.HTTP_401_UNAUTHORIZED,
+        detail="Invalid or expired token",
+    )
     try:
         payload = auth.decode_token(token)
         username = payload.get("sub")
@@ -26,7 +29,13 @@ def get_current_user(token: str = Depends(oauth2_scheme), db: Session = Depends(
         if not user:
             raise credentials_exception
         return user
+    except ExpiredSignatureError:
+        raise HTTPException(
+            status_code=status.HTTP_401_UNAUTHORIZED,
+            detail="Access token expired",
+        )
     except JWTError:
+        print("JWT decode failed:", str(JWTError))  # hoặc dùng logging
         raise credentials_exception
 
 def require_roles(*roles: RoleEnum):

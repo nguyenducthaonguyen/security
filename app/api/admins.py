@@ -1,11 +1,13 @@
-from typing import Optional
+from typing import Optional, List
 
 from fastapi import APIRouter, Depends, Query
 from sqlalchemy.orm import Session
 
 from app.cores.dependencies import get_db
+from app.schemas.token_log import TokenLogResponse
 from app.schemas.users import UserReadAdmin
 from app.schemas.posts import MessageResponse
+from app.services.token_log_service import TokenLogService
 from app.services.user_service import UserService
 
 
@@ -14,6 +16,9 @@ router = APIRouter()
 
 def get_user_service(db: Session = Depends(get_db)) -> UserService:
     return UserService(db)
+
+def get_token_log_service(db: Session = Depends(get_db)) -> TokenLogService:
+    return TokenLogService(db)
 
 
 @router.get("/", response_model=list[UserReadAdmin])
@@ -57,3 +62,8 @@ def delete_user(user_id: int, service: UserService = Depends(get_user_service)):
     Admin xóa người dùng cùng tất cả bài viết của họ.
     """
     return service.delete_user(user_id)
+
+
+@router.get("/token", response_model=List[TokenLogResponse])
+def get_token_logs(token_service: TokenLogService = Depends(get_token_log_service)):
+    return token_service.get_paginated()

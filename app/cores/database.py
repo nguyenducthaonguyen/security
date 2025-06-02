@@ -19,6 +19,5 @@ engine = create_engine(DATABASE_CONNECTION)
 # autocommit=False: không tự động commit sau mỗi câu lệnh
 # autoflush=False: không tự động flush dữ liệu về database
 SessionLocal = sessionmaker(autocommit=False, autoflush=False, bind=engine)
-
 # Tạo lớp cơ sở để khai báo các model (bảng dữ liệu)
 Base = declarative_base()
