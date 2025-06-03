@@ -1,6 +1,9 @@
+from datetime import datetime
+
 from sqlalchemy.orm import Session
 from app.models.blacklisted_tokens import BlacklistedToken
 from app.schemas.blacklist_token import BlacklistedTokenCreate
+
 
 class BlacklistedTokenRepository:
     def __init__(self, db: Session):
@@ -14,4 +17,20 @@ class BlacklistedTokenRepository:
         return db_token
 
     def is_blacklisted(self, token: str) -> bool:
-        return self.db.query(BlacklistedToken).filter(BlacklistedToken.token == token).first() is not None
+        # Lọc đúng: filter nhận ColumnElement[bool]
+        return (
+            self.db.query(BlacklistedToken)
+            .filter(BlacklistedToken.token == token)
+            .first()
+            is not None
+        )
+
+    def delete_expired_tokens(self, expire_before: datetime):
+        expired_tokens = (
+            self.db.query(BlacklistedToken)
+            .filter(BlacklistedToken.blacklisted_at < expire_before)
+            .all()
+        )
+        for token in expired_tokens:
+            self.db.delete(token)
+        self.db.commit()

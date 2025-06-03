@@ -1,6 +1,8 @@
+import enum
+
 from sqlalchemy import Column, Integer, String, Enum, Boolean
 from sqlalchemy.orm import relationship
-import enum
+
 from app.cores.database import Base
 
 # Enum định nghĩa các vai trò người dùng

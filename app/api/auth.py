@@ -1,5 +1,6 @@
 from datetime import datetime, timedelta, timezone
 
+import asyncio
 from fastapi import APIRouter, HTTPException, Depends, Response, Request, status
 from fastapi.security import OAuth2PasswordRequestForm
 from sqlalchemy.orm import Session
@@ -13,8 +14,10 @@ from app.schemas.token_log import TokenLogCreate
 from app.schemas.users import UserCreate, UserRead, TokenResponse
 from app.services.active_access_token_service import ActiveAccessTokenService
 from app.services.blacklist_token_service import BlacklistTokenService
+from app.services.rate_limiter_service import RateLimiterService
 from app.services.session_service import SessionService
 from app.services.token_log_service import TokenLogService
+
 
 router = APIRouter()
 
@@ -133,8 +136,6 @@ def logout(request: Request, response: Response, db: Session = Depends(get_db)):
         token_service.delete_token(access_token)
     response.delete_cookie("refresh_token")
 
-
-
     if not success:
         raise HTTPException(status_code=400, detail="Session not found")
 
@@ -164,7 +165,6 @@ def logout_all(
 
 
 # --- Helper functions ---
-
 def safe_log_token_action(db: Session, user: User, action: str, request: Request):
     """Ghi log hành động token, tránh lỗi gây crash."""
     try:

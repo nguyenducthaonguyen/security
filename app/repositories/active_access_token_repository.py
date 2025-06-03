@@ -1,3 +1,4 @@
+from datetime import datetime, timezone
 from os import access
 from typing import List
 
@@ -48,5 +49,14 @@ class ActiveAccessTokenRepository:
             self.db.rollback()
             return False
 
+    def delete_expired_tokens(self):
+        expired_tokens = (
+            self.db.query(ActiveAccessToken)
+            .filter(ActiveAccessToken.expires_at < datetime.now(timezone.utc))
+            .all()
+        )
+        for token in expired_tokens:
+            self.db.delete(token)
+        self.db.commit()
 
 

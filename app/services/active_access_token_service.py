@@ -1,3 +1,4 @@
+from datetime import datetime, timezone, timedelta
 from typing import List
 
 from fastapi import HTTPException
@@ -37,3 +38,6 @@ class ActiveAccessTokenService:
                 raise HTTPException(status_code=404, detail="No tokens found for user")
         except Exception as e:
             raise HTTPException(status_code=400, detail="Deletion failed")
+
+    def cleanup_expired_tokens(self):
+        self.repo.delete_expired_tokens()

@@ -1,6 +1,10 @@
+from datetime import datetime, timedelta, timezone
+
 from sqlalchemy.orm import Session
+
 from app.schemas.blacklist_token import BlacklistedTokenCreate
 from app.repositories.blacklist_token_repository import BlacklistedTokenRepository
+
 
 class BlacklistTokenService:
     def __init__(self, db: Session):
@@ -12,3 +16,9 @@ class BlacklistTokenService:
 
     def is_token_blacklisted(self, token: str) -> bool:
         return self.repo.is_blacklisted(token)
+
+    def cleanup_expired_tokens(self, expire_minutes: int = 15):
+        expire_time = datetime.now(timezone.utc) - timedelta(minutes=expire_minutes)
+        # Xóa tất cả token blacklist có blacklisted_at < expire_time
+        self.repo.delete_expired_tokens(expire_time)
+
