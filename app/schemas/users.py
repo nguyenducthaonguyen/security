@@ -1,5 +1,8 @@
-from pydantic import BaseModel, EmailStr, constr, field_validator
+from typing import List
+
+from pydantic import BaseModel, EmailStr, constr, field_validator, ConfigDict
 from app.models.users import GenderEnum, RoleEnum
+from app.schemas.posts import PostResponse
 
 
 class UserCreate(BaseModel):
@@ -74,6 +77,19 @@ class PasswordChangeRequest(BaseModel):
         if v != password:
             raise ValueError("Password confirmation does not match")
         return v
+
+
+class UserWithPostsResponse(BaseModel):
+    id: int
+    username: str
+    email: str
+    fullname: str
+    gender: str
+    role: str
+    status: bool
+    posts: list[PostResponse]
+
+    model_config = ConfigDict(from_attributes=True)
 
 
 class MessageResponse(BaseModel):

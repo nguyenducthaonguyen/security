@@ -1,3 +1,5 @@
+from typing import Optional
+
 from fastapi import HTTPException
 from sqlalchemy.exc import SQLAlchemyError
 from sqlalchemy.orm import Session
@@ -101,3 +103,26 @@ class UserService:
 
         except SQLAlchemyError:
             raise HTTPException(status_code=500, detail="An error occurred while deleting the user")
+
+    def get_users_with_posts_paginated(self, page: int, limit: int, name: Optional[str] = None, status: Optional[bool] = None):
+        skip = (page - 1) * limit
+        users = self.repo.get_users_with_posts(skip, limit, name, status)
+        total = self.repo.count_users(name, status)
+
+        last_page = (total - 1) // limit + 1
+
+        return {
+            "status_code": 200,
+            "message": "Success",
+            "data": users,
+            "pagination": {
+                "total": total,
+                "limit": limit,
+                "offset": skip
+            },
+            "link": {
+                "self": f"http://127.0.0.1:8000/api/v1/admins/users-with-posts?page={page}&limit={limit}",
+                "next": f"http://127.0.0.1:8000/api/v1/admins/users-with-posts?page={page + 1}&limit={limit}" if page < last_page else None,
+                "last": f"http://127.0.0.1:8000/api/v1/admins/users-with-posts?page={last_page}&limit={limit}"
+            }
+        }

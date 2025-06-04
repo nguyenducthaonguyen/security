@@ -26,3 +26,12 @@ class PostRead(PostBase):
 # Schema dùng để trả về thông báo dạng text
 class MessageResponse(BaseModel):
     detail: str
+
+
+class PostResponse(BaseModel):
+    id: int
+    title: str
+    content: str
+
+    class Config:
+        from_attributes = True

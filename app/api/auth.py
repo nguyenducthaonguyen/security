@@ -9,10 +9,12 @@ from app.cores import auth
 from app.cores.dependencies import get_db, get_current_user
 from app.models.users import User
 from app.schemas.active_access_tokens import ActiveAccessTokenCreate
+from app.schemas.response import StandardResponse
 from app.schemas.session import SessionCreate
 from app.schemas.token_log import TokenLogCreate
 from app.schemas.users import UserCreate, UserRead, TokenResponse
 from app.services.active_access_token_service import ActiveAccessTokenService
+from app.services.auth_service import AuthService
 from app.services.blacklist_token_service import BlacklistTokenService
 from app.services.rate_limiter_service import RateLimiterService
 from app.services.session_service import SessionService
@@ -22,30 +24,19 @@ from app.services.token_log_service import TokenLogService
 router = APIRouter()
 
 
-@router.post("/register", response_model=UserRead)
+@router.post("/register", response_model=StandardResponse[UserRead])
 def register(user: UserCreate, db: Session = Depends(get_db)):
     # Kiểm tra username và email đã tồn tại chưa
-    if db.query(User).filter(User.username == user.username).first():
-        raise HTTPException(status_code=400, detail="Username already exists")
-    if db.query(User).filter(User.email == user.email).first():
-        raise HTTPException(status_code=400, detail="Email already exists")
-
-    # Hash password và tạo user mới
-    hashed_password = auth.get_password_hash(user.password)
-    new_user = User(
-        username=user.username,
-        password=hashed_password,
-        email=user.email,
-        fullname=user.fullname,
-        gender=user.gender
-    )
-    db.add(new_user)
-    db.commit()
-    db.refresh(new_user)
-    return new_user
+    auth_service = AuthService(db)
+    new_user = auth_service.register_user(user)
+    return {
+        "status_code": 200,
+        "message": "Success",
+        "data": new_user
+    }
 
 
-@router.post("/login", response_model=TokenResponse)
+@router.post("/login", response_model=StandardResponse[TokenResponse])
 def login(
     response: Response,
     request: Request,
@@ -82,10 +73,14 @@ def login(
     log_session(db, refresh_token, request, user)
 
     return {
-        "access_token": access_token,
-        "token_type": "bearer",
-        "id": user.id,
-        "username": user.username,
+        "status_code": 200,
+        "message": "Success",
+        "data": {
+            "access_token": access_token,
+            "token_type": "bearer",
+            "id": user.id,
+            "username": user.username,
+        }
     }
 
 
@@ -139,7 +134,9 @@ def logout(request: Request, response: Response, db: Session = Depends(get_db)):
     if not success:
         raise HTTPException(status_code=400, detail="Session not found")
 
-    return {"message": "Logged out successfully"}
+    return {
+        "status_code": 200,
+        "message": "Logged out successfully"}
 
 
 @router.post("/logout-all")
@@ -161,7 +158,9 @@ def logout_all(
     token_service.delete_tokens_by_user_id(user.id)
 
     response.delete_cookie("refresh_token")
-    return {"message": "Logged out from all sessions"}
+    return {
+        "status_code": 200,
+        "message": "Logged out from all sessions"}
 
 
 # --- Helper functions ---

@@ -1,13 +1,15 @@
 from datetime import datetime, timedelta, timezone
 
+from sqlalchemy.orm import Session
+
 from app.repositories.rate_limiter_repository import RateLimiterRepository
 
 
 class RateLimiterService:
-    def __init__(self, repo: RateLimiterRepository):
-        self.repo = repo
+    def __init__(self, db: Session):
+        self.repo = RateLimiterRepository(db)
 
-    def is_rate_limited(self, token: str, max_requests: int = 10, period_seconds: int = 1) -> bool:
+    def is_rate_limited(self, token: str, max_requests, period_seconds) -> bool:
         now = datetime.now(timezone.utc)
         period_start = now - timedelta(seconds=period_seconds)
 
@@ -19,6 +21,6 @@ class RateLimiterService:
     def blacklist_token(self, token: str):
         self.repo.blacklist_token(token)
 
-    def cleanup_expired_tokens(self, expire_minutes: int = 1):
+    def cleanup_expired_tokens(self, expire_minutes: int):
         expire_time = datetime.now(timezone.utc) - timedelta(minutes=expire_minutes)
         self.repo.delete_expired_tokens(expire_time)

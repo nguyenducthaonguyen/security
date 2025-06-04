@@ -4,8 +4,9 @@ from fastapi import APIRouter, Depends, Query
 from sqlalchemy.orm import Session
 
 from app.cores.dependencies import get_db
+from app.schemas.response import StandardResponseSchema
 from app.schemas.token_log import TokenLogResponse
-from app.schemas.users import UserReadAdmin
+from app.schemas.users import UserReadAdmin, UserWithPostsResponse
 from app.schemas.posts import MessageResponse
 from app.services.token_log_service import TokenLogService
 from app.services.user_service import UserService
@@ -30,6 +31,17 @@ def list_users(
     Lấy danh sách người dùng theo trạng thái.
     """
     return service.list_users(status)
+
+@router.get("/users-with-posts", response_model=StandardResponseSchema)
+def get_users_with_posts(
+    page: int = Query(1, ge=1),
+    limit: int = Query(10, ge=1, le=100),
+    name: Optional[str] = Query(None),
+    status: Optional[bool] = Query(None),
+    service: UserService = Depends(get_user_service),
+):
+    result = service.get_users_with_posts_paginated(page, limit, name, status)
+    return result
 
 
 @router.get("/users/{user_id}", response_model=UserReadAdmin)

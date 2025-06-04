@@ -10,7 +10,7 @@ from app.services.rate_limiter_service import RateLimiterService
 
 
 class RateLimiterMiddleware(BaseHTTPMiddleware):
-    def __init__(self, app, max_requests: int = 10, period_seconds: int = 10):
+    def __init__(self, app, max_requests: int, period_seconds: int):
         super().__init__(app)
         self.max_requests = max_requests
         self.period_seconds = period_seconds
@@ -24,8 +24,7 @@ class RateLimiterMiddleware(BaseHTTPMiddleware):
         db = next(get_db())
 
         try:
-            repo = RateLimiterRepository(db)
-            limiter = RateLimiterService(repo)
+            limiter = RateLimiterService(db)
 
             if limiter.is_rate_limited(token, self.max_requests, self.period_seconds):
                 limiter.blacklist_token(token)
